@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="asset/llava_onevision_black.png">
     <source media="(prefers-color-scheme: light)" srcset="asset/llava_onevision_white.png">
-    <img alt="LLaVA-OneVision 1.5" src="output/llava_onevision_white.png" width="600" style="max-width: 100%;">
+    <img alt="LLaVA-OneVision-1.5" src="output/llava_onevision_white.png" width="600" style="max-width: 100%;">
   </picture>
 </p>
 
@@ -74,7 +74,7 @@
 - [Models](#models)
 - [Datasets](#datasets)
 - [Results](#evaluation-results)
-- [Quick Start with HuggingFace](#quick-start-with-huggingface)
+- [Quick Start with Hugging Face](#quick-start-with-huggingface)
 - [Evaluation](#evaluation)
 - [Quick Start For Training](#quick-start-guide)
 - [Fully Reproducing Guide](#fully-reproducing-guide)
@@ -83,7 +83,7 @@
 
 
 ## Introduction
-**LLaVA-OneVision1.5** introduces a novel family of **fully open-source** Large Multimodal Models (LMMs) that achieves **state-of-the-art performance**  with substantially **lower cost** through training on **native resolution** images.
+**LLaVA-OneVision-1.5** introduces a novel family of **fully open-source** Large Multimodal Models (LMMs) that achieves **state-of-the-art performance**  with substantially **lower cost** through training on **native resolution** images.
 
 - **Superior Performance**
 A family of fully open-source large multimodal models demonstrating 
@@ -96,8 +96,8 @@ Meticulously curated **pre-training and SFT data** with rigorous filtering and q
     - Comprehensive instruction fine-tuning data covering a wide range of tasks
 
 - **Ultra-Efficient Training Framework** Complete end-to-end training framework designed for maximum efficiency:
-    - $16000 total budget for full model training on A100 GPUs  ($0.6 per GPU/Hour)
-    - Built on **MegatronLM** with support for **MoE**, **FP8**, and **long sequence parallelization**
+    - $16000 total budget for full model training on A100 GPUs  ($0.6 per GPU hour)
+    - Built on **Megatron-LM** with support for **MoE**, **FP8**, and **long sequence parallelization**
     - Optimized codebase for cost-effective scaling
 
 
@@ -112,23 +112,23 @@ Meticulously curated **pre-training and SFT data** with rigorous filtering and q
 
 | Model                    | HF Link                                                                                      | Training Log |
 |--------------------------|--------------------------------------------------------------------------------------------------------|-------------|
-| LLaVA-OV-1.5-4B-Instruct | [🤗 HF / 4B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                | [📈 Tensorboard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
-| LLaVA-OV-1.5-8B-Instruct | [🤗 HF / 8B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct)                | [📈 Tensorboard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
-| LLaVA-OV-1.5-4B-Base     | [🤗 HF / 4B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Base)                        | [📈 Tensorboard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
-| LLaVA-OV-1.5-8B-Base     | [🤗 HF / 8B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Base)                        | [📈 Tensorboard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
+| LLaVA-OV-1.5-4B-Instruct | [🤗 HF / 4B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
+| LLaVA-OV-1.5-8B-Instruct | [🤗 HF / 8B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
+| LLaVA-OV-1.5-4B-Base     | [🤗 HF / 4B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
+| LLaVA-OV-1.5-8B-Base     | [🤗 HF / 8B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
 ## Datasets
 
 ![Dataset Visualization](asset/dataset.jpg)
 <p align="left">
   <strong>(a)</strong> The vocabulary coverage proportion in the LLaVA-OneVision-1.5 Mid-Training dataset before and after concept balancing.
   <strong>(b)</strong> Distribution of data sources within the LLaVA-OneVision-1.5 Mid-Training dataset.
-  <strong>(c)</strong> Distribution of data sources within the LLaVA-OneVision-1.5 Insturct dataset.
+  <strong>(c)</strong> Distribution of data sources within the LLaVA-OneVision-1.5 Instruct dataset.
 </p>
 
 | Description        | Link                                                                                                   | Status      |
 |--------------------|--------------------------------------------------------------------------------------------------------|-------------|
 | LLaVA-OV-1.5-Mid-Training-85M   | [🤗HF / Mid-Training 85M](https://huggingface.co/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M) | Uploading…  |
-| LLaVA-OV-1.5-Instruct           | [🤗HF / Insturct-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data)        | Uploading…  |
+| LLaVA-OV-1.5-Instruct           | [🤗HF / Instruct-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data)        | Uploading…  |
 
 
 ## Evaluation Results
@@ -233,8 +233,8 @@ docker run -it --gpus all \
 
 You have two options to get started with LLaVA-OneVision-1.5-stage-0:
 
-#### Option 1: Download pre-trained model from HuggingFace
-Download our `LLaVA-OneVision-1.5-4B-stage0` model directly from [HuggingFace](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-stage0).
+#### Option 1: Download pre-trained model from Hugging Face
+Download our `LLaVA-OneVision-1.5-4B-stage0` model directly from [Hugging Face](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-stage0).
 
 #### Option 2: Merge initial weights yourself
 Alternatively, you can merge the initial weights from the original ViT and LLM:
@@ -246,7 +246,7 @@ python ds/merge_model.py \
 ```
 Note: When merging weights, the adapter component will be initialized with default values.
 
-Convert the model from HuggingFace format to Megatron format:
+Convert the model from Hugging Face format to Megatron format:
 
 ```bash
 AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 bash examples/llava_ov_1_5/convert/convert_4b_hf_to_mcore.sh \
@@ -315,7 +315,7 @@ bash examples/llava_ov_1_5/quick_start/stage_2_instruct_llava_ov_4b.sh
 ```
 
 
-### 6. Convert mcore to huggingface
+### 6. Convert mcore to Hugging Face
 ```bash
 AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 \
 bash examples/llava_ov_1_5/convert/convert_4b_mcore_to_hf.sh \
@@ -345,14 +345,14 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
 To improve model training efficiency, we implement offline sample packing:
 
 1. Download the [**Mid-Training-85M Dataset**](https://huggingface.co/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M)
-2. Pack the data into webdataset format, refer to [**Examples offlinepacking**](examples_offline_packing) and [**Offline Padding-Free Data Packing**](examples/llava_ov_1_5/sample_packing/README.md)
+2. Pack the data into WebDataset format, refer to [**Examples offlinepacking**](examples_offline_packing) and [**Offline Padding-Free Data Packing**](examples/llava_ov_1_5/sample_packing/README.md)
 
 
 ### Instruct
-1. Download the [**LLaVA-OneVision-1.5-Insturct-Data**](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Insturct-Data)
-2. Convert the data into webdataset format, refer to [**Conversion for Mixed Instruction Data**](docs/sft_data_preprocessing.md)
+1. Download the [**LLaVA-OneVision-1.5-Instruct-Data**](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data)
+2. Convert the data into WebDataset format, refer to [**Conversion for Mixed Instruction Data**](docs/sft_data_preprocessing.md)
 
-## Roadmaps
+## Roadmap
 
 Q4 2025 Key Deliverables:
 
@@ -445,7 +445,7 @@ If you find *LLaVA-OneVision-1.5* useful in your research, please consider to ci
 @inproceedings{LLaVA-OneVision-1.5,
   title={LLaVA-OneVision-1.5: Fully Open Framework for Democratized Multimodal Training},
   author={An, Xiang and Xie, Yin and Yang, Kaicheng and Zhang, Wenkang and Zhao, Xiuwei and Cheng, Zheng and Wang, Yirui and Xu, Songcen and Chen, Changrui and Wu, Chunsheng and Tan, Huajie and Li, Chunyuan and Yang, Jing and Yu, Jie and Wang, Xiyao and Qin, Bin and Wang, Yumeng and Yan, Zizhen and Feng, Ziyong and Liu, Ziwei and Li, Bo and Deng, Jiankang},
-  booktitle={arxiv},  
+  booktitle={arXiv},  
   year={2025}
  }
 
