@@ -14,7 +14,7 @@
 
 🤗 **[Models and Datasets](https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713)** |
 🖥️ **[Demo](https://huggingface.co/spaces/lmms-lab/LLaVA-OneVision-1.5)** |
-📄 **[Tech Report](https://arxiv.org/abs/2509.23661)**
+📄 **[Technical Report](https://arxiv.org/abs/2509.23661)**
 
 </div>
 
@@ -64,8 +64,8 @@
 
 
 ## NEWS
-- 2025-09-30: Released a comprehensive [offline data pack documentation](examples_offline_packing).
-- 2025-09-30: Released the LLaVA-OneVision-1.5 [technical report](https://arxiv.org/abs/2509.23661).
+- 2025-09-30: Released the [Offline Data Packing Guide](examples_offline_packing).
+- 2025-09-30: Released the LLaVA-OneVision-1.5 [Technical Report](https://arxiv.org/abs/2509.23661).
 
 
 ## Contents
@@ -112,10 +112,10 @@ Meticulously curated **pre-training and SFT data** with rigorous filtering and q
 
 | Model                    | HF Link                                                                                      | Training Log |
 |--------------------------|--------------------------------------------------------------------------------------------------------|-------------|
-| LLaVA-OV-1.5-4B-Instruct | [🤗 HF / 4B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
-| LLaVA-OV-1.5-8B-Instruct | [🤗 HF / 8B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
-| LLaVA-OV-1.5-4B-Base     | [🤗 HF / 4B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
-| LLaVA-OV-1.5-8B-Base     | [🤗 HF / 8B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
+| LLaVA-OneVision-1.5-4B-Instruct | [🤗 HF / 4B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
+| LLaVA-OneVision-1.5-8B-Instruct | [🤗 HF / 8B-Instruct](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct)                | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
+| LLaVA-OneVision-1.5-4B-Base     | [🤗 HF / 4B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-4B-Instruct/tensorboard) |
+| LLaVA-OneVision-1.5-8B-Base     | [🤗 HF / 8B-Base](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Base)                        | [📈 TensorBoard](https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct/tensorboard) |
 ## Datasets
 
 ![Dataset Visualization](asset/dataset.jpg)
@@ -127,14 +127,14 @@ Meticulously curated **pre-training and SFT data** with rigorous filtering and q
 
 | Description        | Link                                                                                                   | Status      |
 |--------------------|--------------------------------------------------------------------------------------------------------|-------------|
-| LLaVA-OV-1.5-Mid-Training-85M   | [🤗HF / Mid-Training 85M](https://huggingface.co/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M) | Uploading…  |
-| LLaVA-OV-1.5-Instruct           | [🤗HF / Instruct-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data)        | Uploading…  |
+| LLaVA-OneVision-1.5-Mid-Training-85M   | [🤗HF / Mid-Training 85M](https://huggingface.co/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M) | Uploading…  |
+| LLaVA-OneVision-1.5-Instruct           | [🤗HF / Instruct-Data](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data)        | Uploading…  |
 
 
 ## Evaluation Results
 
 
-All evaluations were conducted using lmms_eval.
+All evaluations were conducted using [lmms_eval](https://github.com/EvolvingLMMs-Lab/lmms-eval).
 
 ![](asset/performance.png)
 
