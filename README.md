@@ -404,6 +404,13 @@ Thanks so much to all of our amazing contributors!
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/Luodian">
+                    <img src="https://avatars.githubusercontent.com/u/15847405?v=4" width="80;" alt="Luodian"/>
+                    <br />
+                    <sub><b>Luodian</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/killTheHostage">
                     <img src="https://avatars.githubusercontent.com/u/16442720?v=4" width="80;" alt="killTheHostage"/>
                     <br />
@@ -417,6 +424,8 @@ Thanks so much to all of our amazing contributors!
                     <sub><b>mathCrazyy</b></sub>
                 </a>
             </td>
+		</tr>
+		<tr>
             <td align="center">
                 <a href="https://github.com/yunglechao">
                     <img src="https://avatars.githubusercontent.com/u/7631185?v=4" width="80;" alt="yunglechao"/>
@@ -424,8 +433,6 @@ Thanks so much to all of our amazing contributors!
                     <sub><b>yunglechao</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
                 <a href="https://github.com/RobitYadda">
                     <img src="https://avatars.githubusercontent.com/u/6811311?v=4" width="80;" alt="RobitYadda"/>
