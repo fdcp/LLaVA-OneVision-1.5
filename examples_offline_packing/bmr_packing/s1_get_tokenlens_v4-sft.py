@@ -263,7 +263,7 @@ def merge_files_by_token(input_files, output_file, max_token=MAX_TOKEN_LEN):
 
     # 定义排序键（按token_len整数排序）
     def sort_key(line):
-        _, token_str = line.strip().split(':', 1)
+        token_str = line.strip().split(':')[-1]
         return int(token_str)
 
     try:
