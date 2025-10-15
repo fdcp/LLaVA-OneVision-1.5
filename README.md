@@ -418,14 +418,21 @@ Thanks so much to all of our amazing contributors!
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/Lornatang">
+                    <img src="https://avatars.githubusercontent.com/u/31124350?v=4" width="80;" alt="Lornatang"/>
+                    <br />
+                    <sub><b>Lornatang</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
                 <a href="https://github.com/mathCrazyy">
                     <img src="https://avatars.githubusercontent.com/u/20607153?v=4" width="80;" alt="mathCrazyy"/>
                     <br />
                     <sub><b>mathCrazyy</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
                 <a href="https://github.com/yunglechao">
                     <img src="https://avatars.githubusercontent.com/u/7631185?v=4" width="80;" alt="yunglechao"/>
