@@ -145,7 +145,7 @@ All evaluations were conducted using [lmms_eval](https://github.com/EvolvingLMMs
 ```python
 from transformers import AutoTokenizer, AutoProcessor, AutoModelForCausalLM
 from qwen_vl_utils import process_vision_info
-model_path = "lmms-lab/LLaVA-One-Vision-1.5-8B-Instruct"
+model_path = "lmms-lab/LLaVA-OneVision-1.5-8B-Instruct"
 
 # default: Load the model on the available device(s)
 model = AutoModelForCausalLM.from_pretrained(
