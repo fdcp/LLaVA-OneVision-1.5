@@ -55,13 +55,29 @@ class MMPlugin:
 
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
         r"""
-        Pre-processes a single image.
+        Pre-processes a single image using min_pixels and max_pixels parameters.
         """
-        image_resolution: int = kwargs.get("image_resolution")
-        if max(image.width, image.height) > image_resolution:
-            resize_factor = image_resolution / max(image.width, image.height)
-            width, height = int(image.width * resize_factor), int(image.height * resize_factor)
-            image = image.resize((width, height), resample=Image.NEAREST)
+        # Get min_pixels and max_pixels from kwargs or use defaults
+        min_pixels = kwargs.get("min_pixels", 4 * 28 * 28)  # Default: 4 * 28 * 28
+        max_pixels = kwargs.get("max_pixels", 16384 * 28 * 28)  # Default: 16384 * 28 * 28
+
+        # Convert to numpy array for easier calculation
+        img_array = np.array(image)
+        current_pixels = img_array.shape[0] * img_array.shape[1]
+
+        # If image is too small, scale it up to meet min_pixels requirement
+        if current_pixels < min_pixels:
+            scale_factor = (min_pixels / current_pixels) ** 0.5
+            new_width = int(image.width * scale_factor)
+            new_height = int(image.height * scale_factor)
+            image = image.resize((new_width, new_height), resample=Image.BICUBIC)
+
+        # If image is too large, scale it down to meet max_pixels requirement
+        elif current_pixels > max_pixels:
+            scale_factor = (max_pixels / current_pixels) ** 0.5
+            new_width = int(image.width * scale_factor)
+            new_height = int(image.height * scale_factor)
+            image = image.resize((new_width, new_height), resample=Image.NEAREST)
 
         if image.mode != "RGB":
             image = image.convert("RGB")
@@ -122,10 +138,17 @@ class MMPlugin:
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         video_processor: "BaseImageProcessor" = getattr(processor, "video_processor", image_processor)
         input_dict = {"images": None}  # default key
+
         if len(images) != 0:
+            # Get min_pixels and max_pixels from processor if available, otherwise use defaults
+            min_pixels = getattr(processor.image_processor, "min_pixels", None)
+            max_pixels = getattr(processor.image_processor, "max_pixels", None)
+            assert min_pixels is not None and max_pixels is not None, f'min_pixels: {min_pixels}, max_pixels: {max_pixels}'
+
             images = self._regularize_images(
                 images,
-                image_resolution=getattr(processor, "image_resolution", 512),
+                min_pixels=min_pixels,
+                max_pixels=max_pixels,
             )
             input_dict["images"] = images
 

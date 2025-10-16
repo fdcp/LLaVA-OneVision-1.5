@@ -111,7 +111,9 @@ DATA_ARGS=(
 )
 
 TRAINING_ARGS=(
-    --image-resolution 1000
+    # Image size control using min/max pixels instead of fixed resolution
+    --min-pixels 3136  # 560*560 (minimum image pixels)
+    --max-pixels 12845056  # 1000*1000 (maximum image pixels)
     --training-phase sft
     --trainable-modules language_model adapter vision_model
     --seq-length "${SEQ_LEN}"

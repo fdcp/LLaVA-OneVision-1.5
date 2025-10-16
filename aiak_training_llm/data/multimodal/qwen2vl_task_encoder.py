@@ -116,8 +116,13 @@ class Qwen2VLTaskEncoder(TaskEncoder):
             self.chat_template = get_chat_template()
         self.processor = AutoProcessor.from_pretrained(self.args.hf_tokenizer_path, trust_remote_code=True)
 
-        if args.image_resolution:
-            setattr(self.processor, 'image_resolution', args.image_resolution)
+        # if args.image_resolution:
+        #     setattr(self.processor, 'image_resolution', args.image_resolution)
+        # Set min_pixels and max_pixels for processor
+        if args.min_pixels:
+            setattr(self.processor.image_processor, 'min_pixels', args.min_pixels)
+        if args.max_pixels:
+            setattr(self.processor.image_processor, 'max_pixels', args.max_pixels)
         # video
         self.frame_min_pixels = args.frame_min_pixels
         self.frame_max_pixels = args.frame_max_pixels
