@@ -22,12 +22,12 @@
 
 <p align="center">
   <!-- Mid-Training Dataset Downloads -->
-  <a href="https://huggingface.co/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M">
-    <img alt="HF Mid-Training Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/lmms-lab/LLaVA-One-Vision-1.5-Mid-Training-85M&amp;query=downloads&amp;label=Mid%20Training%20DATA%20Downloads&amp;color=green&amp;logo=huggingface&amp">
+  <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M">
+    <img alt="HF Mid-Training Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/mvp-lab/LLaVA-OneVision-1.5-Mid-Training-85M&amp;query=downloads&amp;label=Mid%20Training%20DATA%20Downloads&amp;color=green&amp;logo=huggingface&amp">
   </a>
   <!-- Instruct Dataset Downloads -->
-  <a href="https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data">
-    <img alt="HF Instruct Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/lmms-lab/LLaVA-OneVision-1.5-Instruct-Data&amp;query=downloads&amp;label=Instruct%20DATA%20Downloads&amp;color=blue&amp;logo=huggingface&amp">
+  <a href="https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data">
+    <img alt="HF Instruct Dataset Downloads" src="https://img.shields.io/badge/dynamic/json?url=https://huggingface.co/api/datasets/mvp-lab/LLaVA-OneVision-1.5-Instruct-Data&amp;query=downloads&amp;label=Instruct%20DATA%20Downloads&amp;color=blue&amp;logo=huggingface&amp">
   </a>
   <!-- Model Downloads -->
   <a href="https://huggingface.co/lmms-lab/LLaVA-OneVision-1.5-8B-Instruct">
