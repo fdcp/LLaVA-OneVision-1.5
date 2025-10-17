@@ -404,6 +404,13 @@ Thanks so much to all of our amazing contributors!
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/Lornatang">
+                    <img src="https://avatars.githubusercontent.com/u/31124350?v=4" width="80;" alt="Lornatang"/>
+                    <br />
+                    <sub><b>Lornatang</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/Luodian">
                     <img src="https://avatars.githubusercontent.com/u/15847405?v=4" width="80;" alt="Luodian"/>
                     <br />
@@ -415,13 +422,6 @@ Thanks so much to all of our amazing contributors!
                     <img src="https://avatars.githubusercontent.com/u/16442720?v=4" width="80;" alt="killTheHostage"/>
                     <br />
                     <sub><b>killTheHostage</b></sub>
-                </a>
-            </td>
-            <td align="center">
-                <a href="https://github.com/Lornatang">
-                    <img src="https://avatars.githubusercontent.com/u/31124350?v=4" width="80;" alt="Lornatang"/>
-                    <br />
-                    <sub><b>Lornatang</b></sub>
                 </a>
             </td>
 		</tr>
