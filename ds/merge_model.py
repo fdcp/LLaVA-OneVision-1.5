@@ -37,12 +37,12 @@ def create_test_image():
 
 def load_empty_model(llm_path):
     print("Loading tokenizer and processor from Qwen2.5-VL and empty model...")
-    tokenizer = Qwen2Tokenizer.from_pretrained('Qwen/Qwen2.5-VL-7B-Instruct', trust_remote_code=True, device_map={"": f"cuda:{CUDA_DEVICE}"})
-    processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct")
+    tokenizer = Qwen2Tokenizer.from_pretrained('Qwen/Qwen2.5-VL-7B-Instruct', trust_remote_code=True, device_map={"": f"cuda:{CUDA_DEVICE}"}, use_fast=True)
+    processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct", use_fast=True)
     processor.image_processor.temporal_patch_size = 1
     processor.image_processor.max_pixels = 1600*1600
     llava_ov_config = Llavaonevision1_5Config()
-    llm_config = AutoConfig.from_pretrained(llm_path, trust_remote_code=True)
+    llm_config = AutoConfig.from_pretrained(llm_path, trust_remote_code=True, use_fast=True)
     llava_ov_config.text_config.update(llm_config.to_dict())
     llava_ov_config.vision_config.text_hidden_size = llava_ov_config.text_config.hidden_size
     model = LLaVAOneVision1_5_ForConditionalGeneration(llava_ov_config)
@@ -199,7 +199,6 @@ def load_llm_weights(model, llm_path, cur_len):
     else:
         cache_path = snapshot_download(llm_path, allow_patterns="*.safetensors")
 
-
     llm_weights = {}
     if os.path.isdir(cache_path):
         for filename in os.listdir(cache_path):
@@ -215,7 +214,6 @@ def load_llm_weights(model, llm_path, cur_len):
             llm_weights = llm_weights["state_dict"]
     
     loaded_keys = 0
-    total_keys = 0
 
     ADAPTER_KEYS_TO_MODIFY_MAPPING = {
         "model.": "model.language_model.",
@@ -237,9 +235,7 @@ def load_llm_weights(model, llm_path, cur_len):
         llm_weights['lm_head.weight'] = llm_weights['model.language_model.embed_tokens.weight']
     llm_keys = len(set(llm_weights.keys()))
     
-    
     model_state_dict = model.state_dict()
-    total_keys = len(model_state_dict.keys())
     for llm_key in llm_weights:
         if llm_key not in model_state_dict:
             logger.warning(f"LLM key {llm_key} not found in model, skipping...")
@@ -264,9 +260,8 @@ def validate_vit_consistency(model, vit_path, img_path):
     sample_image = Image.open(BytesIO(response.content)).convert("RGB")
     sample_image = sample_image.resize((560, 560))
     
-
-    rice_model = MLCDVisionModel.from_pretrained(vit_path, device_map={"": f"cuda:{CUDA_DEVICE}"}, torch_dtype=torch.float32)
-    processor = CLIPImageProcessor.from_pretrained(vit_path, device_map={"": f"cuda:{CUDA_DEVICE}"}, torch_dtype=torch.float32)
+    rice_model = MLCDVisionModel.from_pretrained(vit_path, device_map={"": f"cuda:{CUDA_DEVICE}"}, dtype=torch.float32)
+    processor = CLIPImageProcessor.from_pretrained(vit_path, device_map={"": f"cuda:{CUDA_DEVICE}"}, dtype=torch.float32, use_fast=True)
     rice_inputs = processor.preprocess(images=sample_image, return_tensors="pt").to(dtype=model.dtype, device=rice_model.device)
         
     rice_model = rice_model.eval()
@@ -285,8 +280,6 @@ def validate_vit_consistency(model, vit_path, img_path):
         output = spatial_reorder(output)
         reord_output_list.append(output)
     rice_vit_features = reord_output_list[-1]
-    
-    
 
     image_grid_thw = torch.tensor([[1, 40, 40]], device=model.device, dtype=torch.long)
     image_processor = Qwen2VLImageProcessor()
@@ -294,7 +287,6 @@ def validate_vit_consistency(model, vit_path, img_path):
     processed_image = image_processor(sample_image, return_tensors="pt")
     with torch.no_grad():
         merged_output = model.visual(processed_image['pixel_values'].to(device=model.device,dtype=model.dtype), grid_thw=image_grid_thw, is_verifying=True)
-
         
     if isinstance(merged_output, torch.Tensor) and isinstance(rice_vit_features, torch.Tensor):
         diff = (merged_output - rice_vit_features).abs().mean().item()
@@ -316,9 +308,8 @@ def validate_llm_consistency(model, llm_path, sample_text):
     print("Verifying consistency of LLM component...")
 
     # Load original LLM model
-
     original_llm = AutoModelForCausalLM.from_pretrained(llm_path).to(dtype=model.dtype, device=model.device)
-    tokenizer = AutoTokenizer.from_pretrained(llm_path)
+    tokenizer = AutoTokenizer.from_pretrained(llm_path, use_fast=True)
 
     # Prepare sample text
     inputs = tokenizer(sample_text, return_tensors="pt").to(model.device)
@@ -365,11 +356,8 @@ def main(args):
     adapter_path = args.adapter_path
     llm_path = args.llm_path
     output_path = args.output_path
-    
-    # test data
-    img_path = "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg"
-    sample_text = "Hello, my dog is cute"
-    
+    img_path = args.img_path
+    sample_text = args.sample_text
     
     # 1. load empty model
     model, processor, tokenizer = load_empty_model(llm_path)
