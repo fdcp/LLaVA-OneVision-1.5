@@ -157,7 +157,7 @@ def write_config(path: EPath, media=None, template_func=None, class_name=None):
 
 def _add_arguments(parser: argparse.ArgumentParser):
     
-    input_token_file ,MAX_TOKEN_LEN,save_files_dir,big_dir,DEFAULT_DIRECTORY= get_init_file()
+    input_token_file ,_,MAX_TOKEN_LEN,save_files_dir,big_dir,DEFAULT_DIRECTORY= get_init_file()
     output_dir=DEFAULT_DIRECTORY+'_wds'
     last_save_dir_json=os.path.join(save_files_dir,"row_packing_jsons")
     last_save_dir_image=os.path.join(save_files_dir,"row_packing_images")

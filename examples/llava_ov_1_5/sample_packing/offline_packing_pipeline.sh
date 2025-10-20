@@ -17,7 +17,6 @@ docker exec -it "$CONTAINER_NAME" bash -c '
     run_python_script "2_do_hashbacket.py"
     run_python_script "3_s2_prepare_rawsamples-vqa.py"
     run_python_script "4_convert_packedsample_to_wds.py"
-    run_python_script "5_make_mix_wds_config.py"
 
     echo "─────────────────All processing workflows have been successfully completed.───────────────────"
 '

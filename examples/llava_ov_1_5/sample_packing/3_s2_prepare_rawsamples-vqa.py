@@ -7,7 +7,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tool import get_init_file
 
-input_token_file ,MAX_TOKEN_LEN,save_files_dir,big_dir,DEFAULT_DIRECTORY= get_init_file()
+input_token_file,_ ,MAX_TOKEN_LEN,save_files_dir,big_dir,DEFAULT_DIRECTORY= get_init_file()
 SRC_DIR_IMGS = DEFAULT_DIRECTORY   # The storage location of image data
 SRC_DIR_JSONS = DEFAULT_DIRECTORY   # The storage location of json data
 SRC_DST_EXTENSIONS = ("jpg", "json")
