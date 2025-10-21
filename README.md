@@ -283,7 +283,7 @@ stage_1_alignment_llava_ov_4b_release 1 1
 # ============================================================
 # Launch
 AIAK_TRAINING_PATH=/workspace/LLaVA-OneVision-1.5 \
-DATA_PATH=LLaVA-OneVision-1.5-Mid-Training-Quick-Start-3M-Webdataset \
+DATA_PATH=LLaVA-OneVision-1.5-Mid-Training-Webdataset-Quick-Start-3M \
 TOKENIZER_PATH=LLaVA-OneVision-1.5-4B-stage0 \
 CHECKPOINT_PATH=stage_1_alignment_llava_ov_4b_release \
 bash examples/llava_ov_1_5/quick_start/stage_1.5_mid_training_llava_ov_4b.sh
