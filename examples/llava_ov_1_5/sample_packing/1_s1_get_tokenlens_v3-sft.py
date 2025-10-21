@@ -16,29 +16,12 @@ from queue import Empty
 import multiprocessing
 from multiprocessing import Pool, Manager, Value
 from tqdm import tqdm
-from tool import get_ip_info,cfg
+from tool import cfg,get_init_file
 
 # Declares a global cross-process counter (defined in the main module for child processes to inherit)
 global_total_counter = None
-MAX_TOKEN_LEN = cfg['sample']['max_len']
 task_type = cfg['sample']['task_type']
-DEFAULT_DIRECTORY = Path(cfg['data']['directory'])
-try:
-    ip_index,_,_=get_ip_info(cfg['hosts'])
-    print('success init ip ,>>>>>>>>>>>>>>>>>>>>>>>>')
-except:
-    print(f"getting ip_index error, default to 0")
-    ip_index=0
-DEFAULT_DIRECTORY=Path(os.path.join(DEFAULT_DIRECTORY,f'part_{ip_index:02d}'))
-save_files_dir=os.path.join(DEFAULT_DIRECTORY,"save_files")
-if os.path.exists(save_files_dir) is False:
-    os.makedirs(save_files_dir)
-
-OUTPUT_FILE = Path(cfg['data']['output_base'])
-TOKEN_INFO_FILE = Path(cfg['data']['output_token'])
-OUTPUT_FILE=os.path.join(save_files_dir,OUTPUT_FILE)
-TOKEN_INFO_FILE=os.path.join(save_files_dir,TOKEN_INFO_FILE)
-
+TOKEN_INFO_FILE,OUTPUT_FILE,MAX_TOKEN_LEN,save_files_dir,big_dir,DEFAULT_DIRECTORY=get_init_file()
 
 CKPT_DIR = cfg['model']['checkpoint']
 MIN_PIXELS = cfg['image']['min_pixels']

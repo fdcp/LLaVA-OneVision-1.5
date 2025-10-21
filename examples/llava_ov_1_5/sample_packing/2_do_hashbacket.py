@@ -2,7 +2,6 @@ from hashbacket import *
 from pprint import pprint
 import os
 import yaml
-from tool import get_ip_info
 import random
 from tool import get_init_file
 
@@ -26,7 +25,7 @@ def get_hs(hs):
     return mean,min_,max_,num
     
 def init():
-    input_file ,MAX_TOKEN_LEN,save_files_dir,_,_= get_init_file()
+    input_file ,_,MAX_TOKEN_LEN,save_files_dir,_,_= get_init_file()
     if not os.path.exists(input_file):
         print(f" file {input_file} does not exist!" )
         processor=None
