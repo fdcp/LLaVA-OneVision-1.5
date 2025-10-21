@@ -391,17 +391,17 @@ Thanks so much to all of our amazing contributors!
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/chengzheng345">
-                    <img src="https://avatars.githubusercontent.com/u/209475443?v=4" width="80;" alt="chengzheng345"/>
-                    <br />
-                    <sub><b>chengzheng345</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/Lornatang">
                     <img src="https://avatars.githubusercontent.com/u/31124350?v=4" width="80;" alt="Lornatang"/>
                     <br />
                     <sub><b>Lornatang</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/chengzheng345">
+                    <img src="https://avatars.githubusercontent.com/u/209475443?v=4" width="80;" alt="chengzheng345"/>
+                    <br />
+                    <sub><b>chengzheng345</b></sub>
                 </a>
             </td>
             <td align="center">
