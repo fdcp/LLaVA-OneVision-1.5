@@ -210,6 +210,7 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
                             })
 
                         return messages
+                    sample_images = sample.images[idx] if isinstance(sample.images[idx], list) else [sample.images[idx]] if sample.images[idx] else None
                     cur_capsample = MultiMixQASample(
                         __key__=f"{sample.__key__}.img{idx:03d}_jpg",
                         __restore_key__=sample.__restore_key__,
@@ -218,7 +219,7 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
                         messages=convert_to_messages(sample.prompts[idx], sample.captions[idx]),
                         video=None,
                         system=None,
-                        image=[sample.images[idx]] if sample.images[idx] else None
+                        image=sample_images
                     )
                     l_Qwen2VLImageTaskSample.append(self.encode_multi_mix_qa(cur_capsample))
                 else:
@@ -381,7 +382,7 @@ class TaskEncoder(DefaultTaskEncoder[OCRSample, OCRSample, ImageTaskBatchPacked,
             # The select_samples_to_pack method should have already ensured that the samples fit.
             if current_length + sample_len > packing_seq_len:
                 print(f"packing_seq_len:{packing_seq_len}----<<<<<----{current_length + sample_len}")
-                raise ValueError(f"Packed sample exceeds the maximum sequence length of {packing_seq_len}: {samples}")
+                raise ValueError(f"packing_seq_len:{packing_seq_len}----<<<<<----{current_length + sample_len}")
 
             # Add the sample's tokens and labels
             packed_tokens.append(sample.tokens)

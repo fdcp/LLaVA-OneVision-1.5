@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Type, Dict, List, Optional, Sequence, Set, Tup
 
 from aiak_training_llm.utils.constants import DataRoles
 from .mm_plugin import MMPlugin, Qwen2VLPlugin
-
+import os
 
 if TYPE_CHECKING:
     from aiak_training_llm.tokenizer import AutoTokenizerFromHF
@@ -133,6 +133,8 @@ class ChatTemplate:
             messages = messages[1:]
 
         encoded_messages = self._encode(tokenizer, messages, system)
+        if int(os.environ.get("FILL_TOKEN_198",0))==1:
+            encoded_messages[-1].append(198)
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
     def encode_oneturn(

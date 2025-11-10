@@ -60,3 +60,5 @@ coverage.xml
 **/.ipynb_checkpoints/
 .vscode/
 checkpoints/
+date_*/
+stage_2_*/

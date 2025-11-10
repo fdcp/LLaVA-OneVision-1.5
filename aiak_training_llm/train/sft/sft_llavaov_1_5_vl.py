@@ -189,8 +189,12 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
     tokenizer = get_tokenizer()
 
     processor = AutoProcessor.from_pretrained(args.hf_tokenizer_path, trust_remote_code=True)
-    if args.image_resolution:
-        setattr(processor, "image_resolution", args.image_resolution)
+
+    # Set min_pixels and max_pixels instead of image_resolution
+    if args.min_pixels:
+        setattr(processor, "min_pixels", args.min_pixels)
+    if args.max_pixels:
+        setattr(processor, "max_pixels", args.max_pixels)
 
     config = SFTDatasetConfig(
         random_seed=args.seed,
