@@ -10,15 +10,19 @@
   <strong>Fully Open Framework for Democratized Multimodal Training</strong>
 </p>
 
+
+
 <div align="center">
 
 🤗 **[Models and Datasets](https://huggingface.co/collections/lmms-lab/llava-onevision-15-68d385fe73b50bd22de23713)** |
 🖥️ **[Demo](https://huggingface.co/spaces/lmms-lab/LLaVA-OneVision-1.5)** |
 📄 **[Technical Report](https://arxiv.org/abs/2509.23661)** |
-📰 [知乎](https://www.zhihu.com/question/1959577143697707446)
+📰 **[Zhihu](https://www.zhihu.com/question/1959577143697707446)** |
+📕 **[Xiaohongshu](http://xhslink.com/o/4nXL6EXDTqv)**
 
 </div>
 
+---
 
 <p align="center">
   <!-- Mid-Training Dataset Downloads -->
