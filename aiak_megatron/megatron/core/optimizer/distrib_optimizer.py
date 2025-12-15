@@ -409,7 +409,10 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                     
                     # add to dist metas
                     if config.optimizer == "muon":
-                        dist_metas[shard_main_param] = dist_meta
+                        if config.use_precision_aware_optimizer_no_fp8_or_ds_fp8:
+                            dist_metas[shard_model_param] = dist_meta
+                        else:
+                            dist_metas[shard_main_param] = dist_meta
 
 
                 # fp32 params.
@@ -594,8 +597,19 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
 
         if isinstance(self.optimizer, HybridDeviceOptimizer):
             self.optimizer = HybridDeviceOptimizer(
-                params=[g["orig_group"] for g in self.opt_group_ranges], **self.optimizer.defaults
+                params=[g["orig_group"] for g in self.opt_group_ranges], 
+                **self.optimizer.defaults
             )
+            if config.optimizer == 'muon':
+                assert all(grad_buffer.grad_dtype == torch.float32 for grad_buffer in self.buffers), \
+                    "all grad buffer should only contains float32 type for muon optimizer"
+                gbuf_sizes = [ [(bucket.grad_data.numel(), bucket.offset) for bucket in buffer.buckets ]
+                                for buffer in self.buffers ]
+                self.optimizer.cpu_optimizers[0].enable_distributed_mode(
+                    gbuf_sizes, self.data_parallel_group,
+                    get_tensor_model_parallel_group(),
+                    dist_metas,
+                )
         else:
             self.optimizer.param_groups = [g["orig_group"] for g in self.opt_group_ranges]
             self.optimizer.load_state_dict(self.optimizer.state_dict())
@@ -767,10 +781,14 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                                 "exp_avg_sq": init_shard(self.config.exp_avg_sq_dtype),
                             }
                             # for muon optimizer link state ( for load state dict )
-                            if isinstance(self.optimizer, Muon):
-                                tensors["muon_buffer"] = tensors["exp_avg"]
-                                tensors["adamw_exp_avg"] = tensors["exp_avg"]
-                                tensors["adamw_exp_avg_sq"] = tensors["exp_avg_sq"]
+                            if self.config.optimizer == "muon":
+                                use_muon = self.optimizer.param_groups[group_index].get("use_muon", False)
+                                if use_muon:
+                                    tensors["muon_buffer"] = tensors.pop("exp_avg")
+                                    tensors.pop("exp_avg_sq", None)
+                                else:
+                                    tensors["adamw_exp_avg"] = tensors.pop("exp_avg")
+                                    tensors["adamw_exp_avg_sq"] = tensors.pop("exp_avg_sq")
                             if self.config.use_precision_aware_optimizer_no_fp8_or_ds_fp8:
                                 if self.config.store_param_remainders and self.config.bf16:
                                     tensors["master_param"] = init_shard(torch.int16)
@@ -922,6 +940,17 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
             return
 
         group_index, group_order = self.model_param_group_index_map[model_param]
+                
+        # for muon optimizer link state ( for load state dict )
+        if self.config.optimizer == "muon":
+            use_muon = self.optimizer.param_groups[group_index].get("use_muon", False)
+            if use_muon:
+                tensors["muon_buffer"] = tensors.pop("exp_avg")
+                tensors.pop("exp_avg_sq", None)
+            else:
+                tensors["adamw_exp_avg"] = tensors.pop("exp_avg")
+                tensors["adamw_exp_avg_sq"] = tensors.pop("exp_avg_sq")          
+        
         if self.config.use_precision_aware_optimizer_no_fp8_or_ds_fp8:
             sharded_model_param = self.optimizer.param_groups[group_index]["params"][group_order]
             for k, v in tensors.items():
@@ -940,6 +969,9 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
             optim_state = self.optimizer.state[main_param]
             dst_tensors = {"param": main_param, **optim_state}
             for key in dst_tensors:
+                # since muon optimizer does not have exp_avg and exp_avg_sq (we pop them before)
+                if self.config.optimizer == "muon" and not key in tensors:
+                    continue
                 dst_tensors[key].copy_(tensors[key])
 
     def get_parameter_state_fs_bucket_space(self):

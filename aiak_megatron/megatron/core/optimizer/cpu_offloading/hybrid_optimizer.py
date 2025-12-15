@@ -3,6 +3,7 @@
 
 from collections import defaultdict
 from typing import Dict
+from ..muon import Muon
 
 import torch
 
@@ -173,7 +174,10 @@ class HybridDeviceOptimizer(torch.optim.Optimizer):
             d2h_event = self._cpu_optimizer_map_data_event.pop(cpu_optimizer, None)
             if d2h_event is not None:
                 d2h_event.synchronize()
-            cpu_optimizer.step(closure)
+            if isinstance(cpu_optimizer, Muon):
+                cpu_optimizer.step(self.cpu_copys_map_gpu_param)
+            else:
+                cpu_optimizer.step(closure)
 
         # Sync state and param_groups to HDO after each step.
         # NOTE: It is possible for the optimizer to change the properties

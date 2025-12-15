@@ -326,6 +326,19 @@ def _get_megatron_optimizer_based_on_param_groups(
                     bias_correction=True,
                     fused=True,  # this flag is used to improve the performance of the cpu optimizer
                 )
+            elif config.optimizer == 'muon':
+                gpu_optimizer_cls = Muon
+                cpu_optimizer_cls = Muon
+                optimizer_defaults = dict(
+                    lr=config.lr,
+                    weight_decay=config.weight_decay,
+                    matched_adamw_rms=config.muon_matched_adamw_rms,
+                    momentum=config.muon_momentum,
+                    nesterov=config.muon_nesterov,
+                    ns_steps=config.muon_ns_steps,
+                    adamw_betas=(config.adam_beta1, config.adam_beta2),
+                    adamw_eps=config.adam_eps
+                )
             else:
                 gpu_optimizer_cls = SGD
                 cpu_optimizer_cls = CPUSGD

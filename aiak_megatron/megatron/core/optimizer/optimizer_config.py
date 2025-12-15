@@ -205,8 +205,8 @@ class OptimizerConfig:
 
         if self.use_precision_aware_optimizer:
             assert (
-                self.optimizer == 'adam'
-            ), '--use-precision-aware-optimizer only supported with adam'
+                self.optimizer == 'adam' or self.optimizer == 'muon'
+            ), '--use-precision-aware-optimizer only supported with adam & muon optimizer'
             assert (
                 self.use_distributed_optimizer
             ), '--use-precision-aware-optimizer only supported with distributed optimizer'
