@@ -69,6 +69,7 @@
 
 
 ## NEWS
+- 2025-12-11: Released [RL recipe for LLaVA-OneVision-1.5](https://mvp-ai-lab.github.io/LLaVA-OneVision-1.5-RL/) with [code](https://github.com/EvolvingLMMs-Lab/LLaVA-OneVision-1.5-RL), [data](https://huggingface.co/datasets/mvp-lab/LLaVA-OneVision-1.5-RL-Data), and [model](https://huggingface.co/mvp-lab/LLaVA-OneVision-1.5-8B-RL).
 - 2025-09-30: Released the [Offline Data Packing Guide](examples_offline_packing).
 - 2025-09-30: Released the LLaVA-OneVision-1.5 [Technical Report](https://arxiv.org/abs/2509.23661).
 
