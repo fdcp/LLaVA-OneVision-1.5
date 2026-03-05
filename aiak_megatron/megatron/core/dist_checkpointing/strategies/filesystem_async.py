@@ -2,6 +2,7 @@
 
 """ Storage writer for PyT Distributed format allowing asynchronous save. """
 import dataclasses
+import inspect
 import logging
 import os
 import queue
@@ -17,12 +18,52 @@ import psutil
 import torch
 from torch import multiprocessing as mp
 from torch.distributed.checkpoint import FileSystemWriter
-from torch.distributed.checkpoint.filesystem import DEFAULT_SUFFIX, _StoragePrefix, _write_item
+from torch.distributed.checkpoint.filesystem import DEFAULT_SUFFIX, _StoragePrefix
+from torch.distributed.checkpoint.filesystem import _write_item as _pt_write_item
 from torch.distributed.checkpoint.planner import SavePlan, SavePlanner, WriteItem, WriteItemType
 from torch.distributed.checkpoint.storage import WriteResult
 from torch.futures import Future
 
 from .async_utils import _disable_gc
+
+# Build a version-compatible wrapper around PyTorch's private _write_item.
+# Newer PyTorch versions prepended a `transforms` parameter (and later a
+# `serialization_format` parameter), so we detect the installed signature at
+# import time and normalise the call to the 4-argument form expected by this
+# module's call sites.
+_pt_write_item_params = list(inspect.signature(_pt_write_item).parameters)
+if _pt_write_item_params and _pt_write_item_params[0] == 'transforms':
+    # PyTorch >= ~2.4: signature is (transforms, stream, data, write_item, storage_key[, serialization_format])
+    try:
+        from torch.distributed.checkpoint.filesystem import _StorageWriterTransforms
+    except ImportError as exc:
+        raise ImportError(
+            "Could not import '_StorageWriterTransforms' from torch.distributed.checkpoint.filesystem. "
+            "This PyTorch version is not supported by the installed Megatron checkpoint code."
+        ) from exc
+    _default_transforms = _StorageWriterTransforms()
+
+    if 'serialization_format' in _pt_write_item_params:
+        try:
+            from torch.distributed.checkpoint.filesystem import SerializationFormat
+        except ImportError as exc:
+            raise ImportError(
+                "Could not import 'SerializationFormat' from torch.distributed.checkpoint.filesystem. "
+                "This PyTorch version is not supported by the installed Megatron checkpoint code."
+            ) from exc
+        _default_serialization_format = SerializationFormat.TORCH_SAVE
+
+        def _write_item(stream, data, wi, storage_key):
+            return _pt_write_item(
+                _default_transforms, stream, data, wi, storage_key,
+                _default_serialization_format,
+            )
+    else:
+        def _write_item(stream, data, wi, storage_key):
+            return _pt_write_item(_default_transforms, stream, data, wi, storage_key)
+else:
+    # Older PyTorch: signature is (stream, data, write_item, storage_key)
+    _write_item = _pt_write_item
 
 logger = logging.getLogger(__name__)
 
