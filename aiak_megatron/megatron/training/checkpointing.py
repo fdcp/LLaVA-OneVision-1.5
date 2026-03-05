@@ -878,7 +878,14 @@ def _load_base_checkpoint(
     )
     iteration, release = -1, False
     tracker_filename = 'because load directory is not defined'
-    if load_dir is not None:
+    # If --ckpt-step is provided, use it to override the iteration from the tracker file.
+    ckpt_step = getattr(args, 'ckpt_step', None)
+    if ckpt_step is not None and load_dir is not None:
+        iteration = ckpt_step
+        release = False
+        if not rank0:
+            print_rank_0(f' using --ckpt-step {ckpt_step} to load checkpoint at iteration {iteration}')
+    elif load_dir is not None:
         tracker_filename = get_checkpoint_tracker_filename(load_dir)
         if os.path.isfile(tracker_filename):
             iteration, release = read_metadata(tracker_filename)
@@ -1191,9 +1198,16 @@ def load_checkpoint(model, optimizer, opt_param_scheduler, load_arg='load', stri
                             break
 
                     if ckpt_tp_pp != run_tp_pp and optim_sd_kwargs['sharding_type'] != 'fully_sharded_model_space':
-                        raise RuntimeError(f"{mismatch_msg}: not supported for DistributedOptimizer with "
-                                           f"sharding type {optim_sd_kwargs['sharding_type']}."
-                                           f" Please use `--ckpt-fully-parallel-save` flag during checkpoint saving.")
+                        print_rank_0(
+                            f"{mismatch_msg}: Optimizer state will not be loaded because"
+                            f" DistributedOptimizer was saved with sharding type"
+                            f" '{optim_sd_kwargs['sharding_type']}' which does not support"
+                            f" resharding when TP/PP changes."
+                            f" Consider using `--ckpt-fully-parallel-save` during checkpoint saving"
+                            f" to enable optimizer state resharding across different parallelism configs."
+                        )
+                        gen_sd_optim = None
+                        gen_sd_opt_param_scheduler = None
             else:
                 gen_sd_optim = None
                 gen_sd_opt_param_scheduler = None
