@@ -844,13 +844,24 @@ class TorchDistLoadShardedStrategy(LoadShardedStrategy):
         )
         # Load PyT Distributed format
         fsr = CachedMetadataFileSystemReader(checkpoint_dir)
-        checkpoint.load_state_dict(
-            pyt_state_dict,
-            fsr,
-            planner=MCoreLoadPlanner(
-                shapes_validation_sharded_tensors=flexible_shape_sharded_tensors
-            ),
+        load_planner = MCoreLoadPlanner(
+            shapes_validation_sharded_tensors=flexible_shape_sharded_tensors
         )
+        if get_torch_version() > PkgVersion("2.2"):
+            # `load_state_dict` is deprecated since PyTorch 2.3; use `load` instead.
+            # `checkpoint.load` also properly handles ShardedTensor resharding when
+            # tensor sizes differ (e.g. when TP/PP changes between save and load).
+            checkpoint.load(
+                pyt_state_dict,
+                storage_reader=fsr,
+                planner=load_planner,
+            )
+        else:
+            checkpoint.load_state_dict(
+                pyt_state_dict,
+                fsr,
+                planner=load_planner,
+            )
 
         self.cached_global_metadata = (
             fsr.read_metadata()
