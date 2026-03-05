@@ -13,7 +13,7 @@ import logging
 import math
 from dataclasses import dataclass
 from itertools import product
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -315,4 +315,289 @@ def reformulate_single_nd_flattened_tensor(
         sh_ten_merge_fn,
         sh_ten.replica_id,
         sh_ten.flattened_range,
+    )
+
+
+# ---- Non-flat (regular model weight) tensor resharding for TP/PP changes ----
+
+def _get_axis_fragmentations_from_storage_data(
+    key: str,
+    global_shape: Tuple[int, ...],
+    metadata: Any,
+) -> Optional[Tuple[int, ...]]:
+    """Detect checkpoint's axis_fragmentations from storage_data.
+
+    For uniformly sharded tensors, the unique offsets per axis correspond to
+    the axis_fragmentations used when saving.
+
+    Args:
+        key (str): tensor key
+        global_shape (Tuple[int, ...]): tensor global shape
+        metadata: PyT checkpoint Metadata object
+
+    Returns:
+        Tuple of axis fragmentations inferred from stored chunks, or None if
+        storage_data is unavailable or the key is not found.
+    """
+    storage_data = getattr(metadata, 'storage_data', None)
+    if storage_data is None:
+        return None
+
+    unique_offsets_per_axis = [set() for _ in global_shape]
+    found_key = False
+    for mi in storage_data.keys():
+        if getattr(mi, 'fqn', None) == key:
+            offset = getattr(mi, 'offset', None)
+            if offset is not None and len(offset) == len(global_shape):
+                found_key = True
+                for dim, off in enumerate(offset):
+                    unique_offsets_per_axis[dim].add(int(off))
+
+    if not found_key:
+        return None
+
+    return tuple(len(offsets) if offsets else 1 for offsets in unique_offsets_per_axis)
+
+
+def get_non_flat_resharding_metadata(
+    sharded_state_dict: ShardedStateDict,
+    checkpoint_metadata: Any,
+) -> Dict[str, Tuple[int, ...]]:
+    """Get resharding metadata for non-flat ShardedTensors that need TP/PP resharding.
+
+    Compares the checkpoint's axis_fragmentations (from mcore_data or storage_data)
+    with the current model's axis_fragmentations. Returns metadata for tensors
+    that need resharding.
+
+    Args:
+        sharded_state_dict (ShardedStateDict): sharded state dict with ShardedTensors
+        checkpoint_metadata: PyT Metadata from the checkpoint
+
+    Returns:
+        Dict mapping tensor keys to checkpoint axis_fragmentations for tensors
+        that need resharding.
+    """
+    resharding_needed: Dict[str, Tuple[int, ...]] = {}
+    mcore_data = getattr(checkpoint_metadata, 'mcore_data', {}) or {}
+
+    seen_keys: set = set()
+    from megatron.core.dist_checkpointing.dict_utils import nested_values
+    for sh_ten in nested_values(sharded_state_dict):
+        if not isinstance(sh_ten, ShardedTensor) or is_nd_flattened_tensor(sh_ten):
+            continue
+        if sh_ten.key in seen_keys:
+            continue
+        if sh_ten.allow_shape_mismatch:
+            continue
+        seen_keys.add(sh_ten.key)
+
+        if sh_ten.key not in checkpoint_metadata.state_dict_metadata:
+            continue
+
+        # Try to get checkpoint's axis_fragmentations from mcore_data first
+        ckpt_mcore = mcore_data.get(sh_ten.key, {})
+        ckpt_axis_fragmentations = ckpt_mcore.get('saved_axis_fragmentations')
+
+        if ckpt_axis_fragmentations is None:
+            # Old checkpoint: try to detect from storage_data
+            ckpt_axis_fragmentations = _get_axis_fragmentations_from_storage_data(
+                sh_ten.key, sh_ten.global_shape, checkpoint_metadata
+            )
+
+        if ckpt_axis_fragmentations is None:
+            # Cannot determine checkpoint's sharding; skip
+            continue
+
+        ckpt_axis_fragmentations = tuple(ckpt_axis_fragmentations)
+
+        # No resharding needed if the axis_fragmentations match
+        if ckpt_axis_fragmentations == tuple(sh_ten.axis_fragmentations):
+            continue
+
+        resharding_needed[sh_ten.key] = ckpt_axis_fragmentations
+
+    return resharding_needed
+
+
+def apply_non_flat_tensors_resharding(
+    sharded_state_dict: ShardedStateDict,
+    resharding_metadata: Dict[str, Tuple[int, ...]],
+) -> Tuple[ShardedStateDict, ReformulationRestoreMetadata]:
+    """Apply resharding for non-flat ShardedTensors with TP/PP change.
+
+    Analogous to apply_nd_flattened_tensors_reformulation but for non-flat
+    (regular model weight) tensors.
+
+    Args:
+        sharded_state_dict (ShardedStateDict): sharded state dict potentially
+            with non-flat tensors to reshard.
+        resharding_metadata (Dict[str, Tuple[int, ...]]): dict mapping tensor keys
+            to checkpoint axis_fragmentations for tensors that need resharding.
+
+    Returns:
+        tuple:
+            ShardedStateDict - resharded sharded state dict
+            ReformulationRestoreMetadata - data needed to restore the original
+                formulation with restore_non_flat_tensors_resharding
+    """
+
+    def maybe_reformulate_non_flat_tensor(sh_ten: Any):
+        if not isinstance(sh_ten, ShardedTensor) or is_nd_flattened_tensor(sh_ten):
+            return sh_ten
+        if sh_ten.key not in resharding_metadata:
+            return sh_ten
+        return reformulate_single_non_flat_tensor(sh_ten, resharding_metadata[sh_ten.key])
+
+    dict_list_map_inplace(maybe_reformulate_non_flat_tensor, sharded_state_dict)
+    sh_ten_factories, _ = extract_matching_values(
+        sharded_state_dict,
+        lambda x: isinstance(x, ShardedTensorFactory),
+        return_lists_as_dicts=True,
+    )
+    apply_factories(sharded_state_dict)
+
+    def unlink_data(x):
+        x.data = None
+        return x
+
+    dict_list_map_inplace(unlink_data, sh_ten_factories)
+    return sharded_state_dict, sh_ten_factories
+
+
+def restore_non_flat_tensors_resharding(
+    state_dict: StateDict,
+    formulation_restore_metadata: ReformulationRestoreMetadata,
+) -> StateDict:
+    """Restores the original state dict from a resharded non-flat form.
+
+    Inverse of apply_non_flat_tensors_resharding.
+
+    Args:
+        state_dict (StateDict): state dict obtained by loading a resharded
+            sharded state dict.
+        formulation_restore_metadata (ReformulationRestoreMetadata): metadata
+            returned by apply_non_flat_tensors_resharding.
+
+    Returns:
+        StateDict: state dict with the original tensors formulation restored
+    """
+    return apply_factory_merges(state_dict, formulation_restore_metadata)
+
+
+def reformulate_single_non_flat_tensor(
+    sh_ten: ShardedTensor,
+    ckpt_axis_fragmentations: Tuple[int, ...],
+) -> ShardedTensorFactory:
+    """Reformulate a single non-flat ShardedTensor for loading with TP/PP change.
+
+    Creates a ShardedTensorFactory that:
+    - build_fn: produces ShardedTensors matching the checkpoint's sharding
+    - merge_fn: slices the loaded checkpoint shard to the current rank's portion
+
+    Args:
+        sh_ten (ShardedTensor): non-flat sharded tensor to reformulate.
+        ckpt_axis_fragmentations (Tuple[int, ...]): axis_fragmentations from the
+            checkpoint (the sharding used when saving).
+
+    Returns:
+        ShardedTensorFactory: factory keeping reformulation and merge information.
+    """
+    # Data won't be needed during loading
+    sh_ten = sh_ten.without_data()
+
+    # Compute the checkpoint's local shape = global_shape / ckpt_axis_fragmentations
+    assert len(ckpt_axis_fragmentations) == len(sh_ten.global_shape), (
+        ckpt_axis_fragmentations, sh_ten
+    )
+    for sh, fragm in zip(sh_ten.global_shape, ckpt_axis_fragmentations):
+        assert sh % fragm == 0, (sh_ten, ckpt_axis_fragmentations)
+    ckpt_local_shape_with_prepended = tuple(
+        sh // fragm for sh, fragm in zip(sh_ten.global_shape, ckpt_axis_fragmentations)
+    )
+    ckpt_local_shape = ckpt_local_shape_with_prepended[sh_ten.prepend_axis_num :]
+
+    # Determine which checkpoint chunks overlap with the current shard
+    overlap_dim_offsets = []
+    assert len(ckpt_axis_fragmentations) == len(sh_ten.axis_fragmentations), (
+        ckpt_axis_fragmentations, sh_ten
+    )
+    for dim, (app_chunk_dim_offset, ckpt_fragm, app_fragm) in enumerate(
+        zip(
+            sh_ten.local_chunk_offset_in_global(),
+            ckpt_axis_fragmentations,
+            sh_ten.axis_fragmentations,
+        )
+    ):
+        first_overlap_dim_offset = int(ckpt_fragm / app_fragm * app_chunk_dim_offset)
+        next_overlap_dim_offset = math.ceil(ckpt_fragm / app_fragm * (app_chunk_dim_offset + 1))
+        overlap_dim_offsets.append(range(first_overlap_dim_offset, next_overlap_dim_offset))
+
+    logger.debug(
+        f'Non-flat resharding: generated overlap shards per dimension: '
+        f'{list(map(len, overlap_dim_offsets))} for ckpt fragmentation '
+        f'{ckpt_axis_fragmentations} vs app {sh_ten.axis_fragmentations} '
+        f'and chunk offset {sh_ten.local_chunk_offset_in_global()}'
+    )
+
+    reformulated_sh_tens = {}
+    for chunk_offset in product(*overlap_dim_offsets):
+        global_offset = tuple(
+            chunk_off * chunk_shape
+            for chunk_off, chunk_shape in zip(chunk_offset, ckpt_local_shape_with_prepended)
+        )
+        reformulated_sh_tens[(global_offset, ckpt_local_shape)] = ShardedTensor(
+            sh_ten.key,
+            None,
+            sh_ten.dtype,
+            ckpt_local_shape,
+            sh_ten.global_shape,
+            global_offset,
+            ckpt_axis_fragmentations,
+            sh_ten.replica_id,
+            sh_ten.prepend_axis_num,
+            sh_ten.allow_shape_mismatch,
+            # NO flattened_range for non-flat tensors
+        )
+
+    @torch.no_grad()
+    def sh_ten_build_fn(*args, **kwargs):
+        return reformulated_sh_tens
+
+    @torch.no_grad()
+    def sh_ten_merge_fn(sub_state_dict):
+        assert len(sub_state_dict) > 0
+        # Determine device from loaded tensors
+        first_val = next(iter(sub_state_dict.values()))
+        device = first_val.device if isinstance(first_val, torch.Tensor) else None
+        app_ten = torch.empty(sh_ten.local_shape, dtype=sh_ten.dtype, device=device)
+
+        for (ckpt_global_offset, ckpt_local_shape_key), ckpt_ten in sub_state_dict.items():
+            dest_ten = app_ten
+            src_ten = ckpt_ten.view(ckpt_local_shape_key)
+            for (
+                dim,
+                offset_for_saved_tensor,
+                offset_for_current_tensor,
+                length,
+            ) in _shards_get_overlap_region_wrt_saved_tensor(
+                saved_shard=ChunkStorageMetadata(
+                    ckpt_global_offset[sh_ten.prepend_axis_num :], ckpt_local_shape_key
+                ),
+                current_shard=ChunkStorageMetadata(
+                    sh_ten.global_offset[sh_ten.prepend_axis_num :], sh_ten.local_shape
+                ),
+            ):
+                src_ten = src_ten.narrow(dim, offset_for_saved_tensor, length)
+                dest_ten = dest_ten.narrow(dim, offset_for_current_tensor, length)
+            dest_ten.copy_(src_ten)
+
+        return app_ten
+
+    return ShardedTensorFactory(
+        sh_ten.key,
+        sh_ten.data,
+        sh_ten_build_fn,
+        sh_ten_merge_fn,
+        sh_ten.replica_id,
+        # NO flattened_range for non-flat tensors
     )

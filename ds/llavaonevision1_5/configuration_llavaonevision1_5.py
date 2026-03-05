@@ -282,6 +282,9 @@ class Llavaonevision1_5Config(PretrainedConfig):
         self.image_token_id = image_token_id
         self.video_token_id = video_token_id
         self.vocab_size = vocab_size
+        # Keep text_config.vocab_size in sync with the outer vocab_size so that
+        # lm_head output dim and the loss function's vocab_size always agree.
+        self.text_config.vocab_size = vocab_size
 
         super().__init__(**kwargs)
 
