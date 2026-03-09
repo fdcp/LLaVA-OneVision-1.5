@@ -494,6 +494,10 @@ class MCoreSavePlanner(DefaultSavePlanner):
         """Merges MCore data for all plans."""
         global_plan, metadata = super().create_global_plan(all_plans)
         metadata.mcore_data = dict(ChainMap(*(plan.mcore_data for plan in all_plans)))
+        if metadata.planner_data is None:
+            metadata.planner_data = dict(
+                ChainMap(*(plan.planner_data for plan in all_plans if plan.planner_data))
+            )
         return global_plan, metadata
 
     def create_decentralized_global_plan(self, local_plan: SavePlan) -> SavePlan:
@@ -957,10 +961,10 @@ class TorchDistLoadShardedStrategy(LoadShardedStrategy):
             if k.startswith(key_prefix):
                 continue
             new_state_dict_metadata[k] = original_metadata.state_dict_metadata[k]
-        for k in original_metadata.planner_data.keys():
+        for k, v in (original_metadata.planner_data or {}).items():
             if k.startswith(key_prefix):
                 continue
-            new_planner_data[k] = original_metadata.planner_data[k]
+            new_planner_data[k] = v
         for k in original_metadata.storage_data.keys():
             if k.fqn.startswith(key_prefix):
                 continue
