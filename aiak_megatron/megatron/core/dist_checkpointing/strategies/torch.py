@@ -562,6 +562,12 @@ class MCoreLoadPlanner(DefaultLoadPlanner):
                 )
                 raise CheckpointingException(_msg)
 
+    def set_up_planner(self, state_dict, metadata, is_coordinator: bool) -> None:
+        """Normalizes planner_data=None to {} for compatibility with legacy checkpoints."""
+        if metadata.planner_data is None:
+            metadata.planner_data = {}
+        super().set_up_planner(state_dict, metadata, is_coordinator)
+
     def create_local_plan(self) -> LoadPlan:
         """Runs additional shapes validation."""
         self._validate_global_shapes(self.metadata, self.shapes_validation_sharded_tensors)
@@ -1012,3 +1018,63 @@ class TorchDistLoadShardedStrategy(LoadShardedStrategy):
 
     def check_version_compatibility(self, loaded_version):
         pass  # TODO
+
+
+def fix_checkpoint_metadata(checkpoint_dir: Union[str, Path]) -> None:
+    """Repair a DCP checkpoint whose ``.metadata`` file has ``planner_data=None``.
+
+    Checkpoints saved with older MCore code may have ``planner_data`` set to
+    ``None`` in the pickled ``.metadata`` file.  PyTorch's built-in helpers
+    (e.g. ``torch.distributed.checkpoint.format_utils.dcp_to_torch_save``) and
+    ``DefaultLoadPlanner`` iterate over ``planner_data`` and raise::
+
+        TypeError: argument of type 'NoneType' is not iterable
+
+    This function reads the ``.metadata`` file, replaces ``None`` with an empty
+    dict if necessary, and writes the corrected file back in-place (the
+    original is kept as ``.metadata.bck`` until the rename succeeds).
+
+    Args:
+        checkpoint_dir: Path to the DCP checkpoint directory.
+    """
+    checkpoint_dir = Path(checkpoint_dir)
+    fs_reader = FileSystemReader(checkpoint_dir)
+    metadata = fs_reader.read_metadata()
+
+    if metadata.planner_data is not None:
+        logger.debug("fix_checkpoint_metadata: planner_data is already set, nothing to do.")
+        return
+
+    metadata.planner_data = {}
+
+    fs_writer = FileSystemWriter(checkpoint_dir)
+    metadata_path = cast(Path, fs_writer.fs.concat_path(fs_writer.path, _metadata_fn))
+    tmp_path = cast(Path, fs_writer.fs.concat_path(fs_writer.path, f"{_metadata_fn}.tmp"))
+    bck_path = cast(Path, fs_writer.fs.concat_path(fs_writer.path, f"{_metadata_fn}.bck"))
+
+    with fs_writer.fs.create_stream(tmp_path, "wb") as f:
+        pickle.dump(metadata, f)
+        try:
+            os.fsync(f.fileno())
+        except (AttributeError, OSError):
+            pass  # best-effort fsync; skip if the file-like object has no fileno()
+
+    # Remove any stale backup from a previous failed attempt before renaming.
+    try:
+        fs_writer.fs.rm_file(bck_path)
+    except Exception:
+        pass
+
+    fs_writer.fs.rename(metadata_path, bck_path)
+    try:
+        fs_writer.fs.rename(tmp_path, metadata_path)
+    except Exception:
+        fs_writer.fs.rename(bck_path, metadata_path)
+        raise
+    else:
+        fs_writer.fs.rm_file(bck_path)
+
+    logger.info(
+        f"fix_checkpoint_metadata: repaired '{metadata_path}' (planner_data was None, now {{}})."
+    )
+
